@@ -3,8 +3,8 @@ from ddpg import *
 import time
 
 # Environments to be tested on
-# env_name = 'InvertedPendulum-v1'
-env_name = 'Pendulum-v0'
+env_name = 'InvertedPendulum-v1'
+# env_name = 'Pendulum-v0'
 # env_name = 'HalfCheetah-v1'
 
 GAMMA = 0.99
@@ -31,7 +31,7 @@ step_list_ddpg = []
 step_counter = 0
 
 # set term_condition for early stopping according to environment being used
-term_condition = -150  # Pendulum
+term_condition = 500  # Pendulum
 ddpg = DDPG(act_dim = env.action_space.shape[0], obs_dim = env.observation_space.shape[0],critic_lr=1e-3, actor_lr=1e-4, gamma = GAMMA, batch_size = BATCH_SIZE)
 
 for itr in range(NUM_EPISODES):

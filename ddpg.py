@@ -48,21 +48,23 @@ class actor(nn.Module):
         self.output_size = output_size
 
         self.fc1 = nn.Linear(input_size, 400)
-        self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
+        # self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
 
         self.fc2 = nn.Linear(400,400)
-        self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
+        # self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
 
         self.fc3 = nn.Linear(400,output_size)
-        self.fc3.weight.data.uniform_(-0.003, 0.003)
+        # self.fc3.weight.data.uniform_(-0.003, 0.003)
+        self.bn1 = nn.BatchNorm1d(400)
+        self.bn2 = nn.BatchNorm1d(400)
 
 
 
     def forward(self, state):
 
         state = state.type(FloatTensor)
-        x = F.relu(self.fc1(state))
-        x = F.relu(self.fc2(x))
+        x = F.relu(self.bn1(self.fc1(state)))
+        x = F.relu(self.bn2(self.fc2(x)))
         x = F.tanh(self.fc3(x))
 
         return x
@@ -78,16 +80,17 @@ class critic(nn.Module):
         self.output_size = output_size
 
         self.fc1 = nn.Linear(state_size,300)
-        self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
+        # self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
         self.fc2 = nn.Linear(300 + action_size,300)
-        self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
+        # self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
         self.fc3 = nn.Linear(300,output_size)
-        self.fc3.weight.data.uniform_(-0.003,0.003)
+        # self.fc3.weight.data.uniform_(-0.003,0.003)
+        self.bn1 = nn.BatchNorm1d(300)
 
     def forward(self, state, action):
         state = state.type(FloatTensor)
 
-        x = F.relu(self.fc1(state))
+        x = F.relu(self.bn1(self.fc1(state)))
         x = F.relu(self.fc2(torch.cat([x,action],1)))
         x = self.fc3(x)
 
@@ -182,16 +185,19 @@ class DDPG:
 
 
     def get_action_with_noise(self,state):
-
-        state = Variable(torch.from_numpy(state)).type(FloatTensor)
+        state = Variable(torch.from_numpy(state).unsqueeze(0)).type(FloatTensor)
+        self.actor.eval()
         action = self.actor(state).detach()
-        new_action = action.cpu().data.numpy() + self.noise.sample()
+        self.actor.train()
+        new_action = action.cpu().data[0].numpy() + self.noise.sample()
         return new_action
     def get_action(self, state):
-        state = Variable(torch.from_numpy(state)).type(FloatTensor)
+        state = Variable(torch.from_numpy(state).unsqueeze(0)).type(FloatTensor)
+        self.actor.eval()
         action = self.actor(state).detach()
+        self.actor.train()
 
-        return action.data.cpu().numpy()
+        return action.cpu().data[0].numpy()
 
 
 

@@ -4,9 +4,9 @@ from utils import *
 import time
 
 # Environments to be tested on
-env_name = 'InvertedPendulum-v1'
+# env_name = 'InvertedPendulum-v1'
 # env_name = 'Pendulum-v0'
-# env_name = 'HalfCheetah-v1'
+env_name = 'HalfCheetah-v1'
 
 GAMMA = 0.99
 BATCH_SIZE = 128
@@ -26,6 +26,7 @@ solution = load()
 
 for t in range(MAX_STEPS):
     action = solution.get_action(state)
+    # action = env.action_space.sample()
     next_state, reward, done, info = env.step(action)
     time.sleep(0.05)
     print(t)

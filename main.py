@@ -4,8 +4,8 @@ from utils import *
 from ddpg import *
 
 # Environments to be tested on
-env_name = 'InvertedPendulum-v1'
-# env_name = 'Pendulum-v0'
+# env_name = 'InvertedPendulum-v1'
+env_name = 'Pendulum-v0'
 # env_name = 'HalfCheetah-v1'
 
 GAMMA = 0.99
@@ -45,8 +45,12 @@ for ep in range(NUM_EPISODES):
         if done:
             break
 
-        if ep % 100 == 0:
-            print("rewards : %d"%G)
+    # if ep % 100 == 0:
+    print("[%d]loss: %s %s reward: %s" % (ep, loss_actor, loss_critic, G))
+    if G >-150:
+        save(solution)
+        break
+
     # if ep%100 == 0:
 
 
