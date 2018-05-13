@@ -88,7 +88,7 @@ def sample_action(logit, discrete):
 
         mu = logit[0]
         std = logit[1]
-        m = Normal(mu, std)
+        m = Normal(mu, F.softplus(std))
         action = m.sample()
         log_odds = m.log_prob(action)
         return action.data.numpy(), log_odds

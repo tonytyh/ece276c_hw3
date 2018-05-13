@@ -15,9 +15,9 @@ from torch.autograd import Variable
 
 #continous environments:
 # env_name='InvertedPendulum-v1'
-# env_name = 'HalfCheetah-v1'
+env_name = 'HalfCheetah-v1'
 
-env_name='InvertedPendulum-v1'
+# env_name='InvertedPendulum-v1'
 
 # Make the gym environment
 env = gym.make(env_name)
@@ -73,7 +73,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr = learning_rate)
 # take optimizer step
 
 n_iter = 10000
-min_timesteps_per_batch = 500  # sets the batch size for updating network
+min_timesteps_per_batch = 2000  # sets the batch size for updating network
 avg_reward = 0
 avg_rewards = []
 step_list_reinforce = []
