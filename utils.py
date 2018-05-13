@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     ou = OrnsteinUhlenbeckProcess(1)
     data = []
-    for i in range(1000):
+    for i in range(8000):
         data.append(ou.sample())
     plt.plot(data)
     plt.show()

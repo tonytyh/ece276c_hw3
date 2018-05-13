@@ -63,8 +63,14 @@ class actor(nn.Module):
     def forward(self, state):
 
         state = state.type(FloatTensor)
-        x = F.relu(self.bn1(self.fc1(state)))
-        x = F.relu(self.bn2(self.fc2(x)))
+        x = self.fc1(state)
+        x = self.bn1(x)
+        x = F.relu(x)
+
+        x = self.fc2(x)
+        x = self.bn2(x)
+        x = F.relu(x)
+
         x = F.tanh(self.fc3(x))
 
         return x
@@ -89,9 +95,12 @@ class critic(nn.Module):
 
     def forward(self, state, action):
         state = state.type(FloatTensor)
+        x = self.fc1(state)
+        x = self.bn1(x)
+        x = F.relu(x)
 
-        x = F.relu(self.bn1(self.fc1(state)))
-        x = F.relu(self.fc2(torch.cat([x,action],1)))
+        x = self.fc2(torch.cat([x,action],1))
+        x = F.relu(x)
         x = self.fc3(x)
 
         return x
