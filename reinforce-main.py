@@ -11,13 +11,13 @@ from torch.autograd import Variable
 # Select Environment
 
 #discrete environment:
-env_name='CartPole-v0'
+# env_name='CartPole-v0'
 
 #continous environments:
-#env_name='InvertedPendulum-v2'
-#env_name = 'HalfCheetah-v2'
-
 # env_name='InvertedPendulum-v1'
+# env_name = 'HalfCheetah-v1'
+
+env_name='InvertedPendulum-v1'
 
 # Make the gym environment
 env = gym.make(env_name)
@@ -48,6 +48,10 @@ logdir='./REINFORCE/'
 
 # Is this env continuous, or discrete?
 discrete = isinstance(env.action_space, gym.spaces.Discrete)
+if discrete:
+    print("This is discrete")
+else:
+    print("Not discrete")
 
 # Get observation and action space dimensions
 obs_dim = env.observation_space.shape[0]
@@ -58,15 +62,18 @@ max_path_length = max_path_length or env.spec.max_episode_steps
 
 # Make network object (remember to pass in appropriate flags for the type of action space in use)
 #net = mlp(*args)
-net = mlp(obs_dim, 50, act_dim).type(torch.FloatTensor)
+if discrete:
+    net = mlp(obs_dim, 64, act_dim).type(torch.FloatTensor)
+else:
+    net = mlp_continous(obs_dim, 128, act_dim).type(torch.FloatTensor)
 
 # Make optimizer
 optimizer = torch.optim.Adam(net.parameters(), lr = learning_rate)
 
 # take optimizer step
 
-n_iter = 1000
-min_timesteps_per_batch = 2000  # sets the batch size for updating network
+n_iter = 10000
+min_timesteps_per_batch = 500  # sets the batch size for updating network
 avg_reward = 0
 avg_rewards = []
 step_list_reinforce = []
@@ -131,7 +138,7 @@ for itr in range(n_iter):  # loop for number of optimization steps
         if steps > min_timesteps_per_batch:
             break
 
-    update_policy(paths, optimizer)  # use all complete episodes (a batch of timesteps) recorded in this itr to update net
+    update_policy(paths, optimizer,net)  # use all complete episodes (a batch of timesteps) recorded in this itr to update net
 
     if itr == 0:
         avg_reward = path['reward'].sum()

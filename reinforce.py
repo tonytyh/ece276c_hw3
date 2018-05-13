@@ -3,8 +3,11 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 import torch.optim as optim
-from torch.distributions import Categorical
+from torch.distributions import *
+from torch.distributions.normal import *
 from torch.autograd import Variable
+import torch.nn.utils as utils
+
 import gym
 import numpy as np
 # ----------------------------------------------------
@@ -31,6 +34,40 @@ class mlp(nn.Module):
         return action_probs
 
 
+
+class mlp_continous(nn.Module):
+    def __init__(self,obs_dim, hidden_size,act_dim):
+        super(mlp_continous,self).__init__()
+        self.hidden_size = hidden_size
+        self.fc = nn.Linear(obs_dim,hidden_size)
+        self.fc_mu1 = nn.Linear(obs_dim,hidden_size)
+        self.fc_mu2 = nn.Linear(hidden_size, hidden_size)
+        self.fc_mu3 = nn.Linear(hidden_size, act_dim)
+        self.fc_sigma1 = nn.Linear(obs_dim,hidden_size)
+        self.fc_sigma2 = nn.Linear(hidden_size, hidden_size)
+        self.fc_sigma3 = nn.Linear(hidden_size, act_dim)
+        self.bn = nn.BatchNorm1d(hidden_size)
+
+    def forward(self, input):
+        mu = self.fc(input)
+        # mu = self.bn(mu)
+        # mu = F.relu(mu)
+        # mu = self.fc_mu2(mu)
+        # mu = self.bn(mu)
+        mu = F.relu(mu)
+        mu = self.fc_mu3(mu)
+
+        sigma = self.fc(input)
+        # sigma = self.bn(sigma)
+        # sigma = F.relu(sigma)
+        # sigma = self.fc_sigma2(sigma)
+        # sigma = self.bn(sigma)
+        sigma = F.relu(sigma)
+        sigma = self.fc_sigma3(sigma)
+
+        return (mu, sigma)
+
+
 # policy = mlp(env.ob)
 
 
@@ -40,15 +77,27 @@ def sample_action(logit, discrete):
     # Hint: use Categorical and Normal from torch.distributions to sample action and get the log-probability
     # Note that log_probability in this case translates to ln(\pi(a|s))
 
-    m = Categorical(logit)
-    action = m.sample()
-    log_odds = m.log_prob(action)
-    return action.item(), log_odds
+
+    if discrete:
+        m = Categorical(logit)
+        action = m.sample()
+        log_odds = m.log_prob(action)
+        return action.item(), log_odds
+
+    else:
+
+        mu = logit[0]
+        std = logit[1]
+        m = Normal(mu, std)
+        action = m.sample()
+        log_odds = m.log_prob(action)
+        return action.data.numpy(), log_odds
 
 
 
 
-def rewardtogo(rewards):
+
+def reward_to_go(rewards):
     R = 0
     arr = []
     for r in rewards[::-1]:
@@ -60,7 +109,7 @@ def rewardtogo(rewards):
 
 
 
-def update_policy(paths, optimizer):
+def update_policy(paths, optimizer,net):
     # paths: a list of paths (complete episodes, used to calculate return at each time step)
     # net: MLP object
 
@@ -74,7 +123,7 @@ def update_policy(paths, optimizer):
     # calculated as "reward to go"
 
     for path in paths:
-        rew_cums += rewardtogo(path["reward"])
+        rew_cums += reward_to_go(path["reward"])
         log_odds += path["log_odds"]
 
     rew_cums = np.array(rew_cums)
@@ -84,4 +133,5 @@ def update_policy(paths, optimizer):
     optimizer.zero_grad()
     loss = torch.cat(policy_loss).mean()
     loss.backward()
+    torch.nn.utils.clip_grad_norm(net.parameters(), 40)
     optimizer.step()
